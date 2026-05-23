@@ -1,0 +1,87 @@
+/* Racon Tours — team profile pages (link-in-bio)
+   Brand tokens mirror tourcwe.com styles.css */
+:root{
+  --blue:#628395; --blue-dark:#4e6b7a;
+  --gold:#d6ce93; --gold-dark:#bdb87a;
+  --cream:#efebce; --cream-dark:#e4dfbd;
+  --dark:#1c1c1c; --sage:#607466;
+  --font-display:'Cormorant Garamond',Georgia,serif;
+  --font-body:'Nunito',system-ui,sans-serif;
+  --radius:4px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font-body);
+  color:var(--cream);
+  line-height:1.5;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  background:#14171b;
+  background:
+    radial-gradient(120% 60% at 50% -8%, rgba(98,131,149,.30), transparent 60%),
+    linear-gradient(180deg,#1b2026 0%,#15181c 60%,#121417 100%);
+  background-attachment:fixed;
+}
+
+.wrap{max-width:540px;margin:0 auto;padding:52px 20px 56px}
+
+/* ---- header ---- */
+.profile-head{text-align:center}
+.avatar{
+  width:128px;height:128px;border-radius:50%;object-fit:cover;display:block;margin:0 auto;
+  border:3px solid var(--gold);
+  box-shadow:0 0 0 7px rgba(214,206,147,.10), 0 14px 44px rgba(0,0,0,.55);
+}
+.name{
+  font-family:var(--font-display);font-weight:600;font-size:2.5rem;
+  letter-spacing:.5px;margin-top:22px;color:#fbf7e6;
+}
+.tagline{
+  color:rgba(239,235,206,.78);font-size:1.02rem;
+  max-width:32ch;margin:10px auto 0;
+}
+
+/* ---- section divider ---- */
+.section-title{
+  display:flex;align-items:center;gap:14px;
+  margin:40px 2px 14px;
+  color:var(--gold);font-size:.74rem;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+}
+.section-title::before,.section-title::after{
+  content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(214,206,147,.5),transparent);
+}
+
+/* ---- link cards ---- */
+.link{
+  display:flex;align-items:center;gap:14px;
+  background:var(--cream);color:var(--dark);text-decoration:none;
+  border:1px solid var(--gold-dark);border-radius:var(--radius);
+  padding:15px 18px;margin:10px 0;
+  box-shadow:0 2px 10px rgba(0,0,0,.28);
+  transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.link:hover,.link:focus-visible{
+  transform:translateY(-2px);background:#fffdf2;
+  box-shadow:0 9px 24px rgba(0,0,0,.38);outline:none;
+}
+.link:focus-visible{border-color:var(--blue)}
+.link__body{flex:1;min-width:0}
+.link__title{font-weight:700;font-size:1rem;line-height:1.25}
+.link__sub{font-size:.82rem;color:rgba(28,28,28,.6);margin-top:3px;line-height:1.35}
+.link__arrow{color:var(--gold-dark);font-size:1rem;flex-shrink:0;transition:transform .15s ease}
+.link:hover .link__arrow{transform:translate(2px,-2px)}
+
+/* ---- footer ---- */
+.foot{text-align:center;margin-top:50px;color:rgba(239,235,206,.5);font-size:.82rem}
+.foot__mark{height:30px;width:auto;opacity:.65;margin:0 auto 12px;display:block}
+.foot a{color:rgba(239,235,206,.72);text-decoration:none;border-bottom:1px solid rgba(214,206,147,.3)}
+.foot a:hover{color:var(--gold)}
+
+@media (max-width:480px){
+  .wrap{padding:40px 16px 48px}
+  .name{font-size:2.1rem}
+  .avatar{width:112px;height:112px}
+}

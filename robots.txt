@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /scott/
+Disallow: /
+
+Sitemap: https://team.racon.tours/sitemap.xml
