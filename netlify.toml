@@ -7,6 +7,18 @@
     Cache-Control = "public, max-age=86400"
 
 [[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
   for = "/img/*"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+# Roster JSON: revalidate on every fetch so manual ./publish.sh runs go live
+# immediately without waiting for CDN cache to expire.
+[[headers]]
+  for = "/data/roster.json"
+  [headers.values]
+    Cache-Control = "no-cache"
