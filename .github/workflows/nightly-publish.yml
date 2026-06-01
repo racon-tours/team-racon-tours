@@ -1,0 +1,35 @@
+name: nightly-publish
+
+on:
+  schedule:
+    - cron: '15 8 * * *'  # 08:15 UTC = 03:15 CDT / 02:15 CST
+  workflow_dispatch:       # manual trigger from GitHub UI
+
+# One job at a time — never queue overlapping builds.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build (reads public sheet feed)
+        run: python3 publish.py --no-deploy --from-public-feed
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          npm install -g netlify-cli@17
+          netlify deploy --prod --dir=. \
+            --site=02e3c1a1-84ed-45d9-80e5-e85374ccd20d \
+            --no-build \
+            --message="GH Actions $(date -u +%Y-%m-%dT%H:%MZ)"

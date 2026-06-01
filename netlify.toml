@@ -1,5 +1,9 @@
 [build]
   publish = "."
+  command = "python3 publish.py --from-public-feed"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
 
 [[headers]]
   for = "/css/*"

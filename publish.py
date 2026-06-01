@@ -29,6 +29,7 @@ def op(field):
          "--fields", field, "--reveal"]).decode().strip()
 
 def fetch_sheet():
+    """Auth'd POST via 1Password (local dev path)."""
     sid = SHEET_ID_FILE.read_text().strip()
     url, secret = op("url"), op("credential")
     def read(tab):
@@ -41,6 +42,32 @@ def fetch_sheet():
         if not out.get("ok"): raise SystemExit(f"sheet read failed: {out}")
         return out["values"]
     return read("people"), read("links")
+
+# Public read URL (no auth). Hardcoded — must match the doGet route in
+# sheets-endpoint/Code.gs which is locked to the team-racon-tours sheet.
+PUBLIC_FEED = ("https://script.google.com/macros/s/"
+               "AKfycbz7wBPhvcVKMtr6vOqo4dwIPw64LrQzJmwlwpAl1QOuhzhGfoKC5iMEjqMVszGx9ePLHA"
+               "/exec?action=read_roster")
+
+def fetch_from_public_feed():
+    """Public GET via Apps Script — used by Netlify CI builds, no secrets needed."""
+    req = request.Request(PUBLIC_FEED, headers={"User-Agent": "team-racon-tours-builder/1.0"})
+    with request.urlopen(req, timeout=30) as r:
+        data = json.loads(r.read())
+    if not data.get("ok"):
+        raise SystemExit(f"public feed read failed: {data}")
+    return data["people"], data["links"]
+
+def to_dictrows_from_feed(items):
+    """Public feed already gives dicts (one per row, headers as keys). Normalize."""
+    out = []
+    for obj in items or []:
+        if not str(obj.get("slug","")).strip(): continue
+        # already-normalized published flag from the server side
+        p = obj.get("published", True)
+        obj["published"] = (p is True or str(p).strip().upper() == "TRUE" or str(p).strip() == "")
+        out.append(obj)
+    return out
 
 def to_objects(rows):
     """Header row + data rows → list of dicts. Skip rows w/ empty first cell."""
@@ -163,13 +190,33 @@ def strip_html(s):
 
 # ---------- Build ----------
 
-def build():
-    people_rows, links_rows = fetch_sheet()
-    people = [p for p in to_objects(people_rows) if is_published(p)]
-    links  = [l for l in to_objects(links_rows)  if is_published(l)]
+def build(from_public_feed=False):
+    if from_public_feed:
+        raw_people, raw_links = fetch_from_public_feed()
+        people = [p for p in to_dictrows_from_feed(raw_people) if is_published(p)]
+        links  = [l for l in to_dictrows_from_feed(raw_links)  if is_published(l)]
+    else:
+        people_rows, links_rows = fetch_sheet()
+        people = [p for p in to_objects(people_rows) if is_published(p)]
+        links  = [l for l in to_objects(links_rows)  if is_published(l)]
 
     if not people:
         raise SystemExit("no published people in sheet — refusing to build empty site")
+
+    # Slug validation: every links.slug must match a people.slug.
+    # Loud error here is much better than silently-broken pages.
+    valid_slugs = {p["slug"].strip() for p in people}
+    orphans = []
+    for i, l in enumerate(links, start=2):  # row 2 = first data row
+        s = (l.get("slug") or "").strip()
+        if s and s not in valid_slugs:
+            orphans.append((i, s, l.get("section",""), l.get("title","")))
+    if orphans:
+        msg = ["sheet validation FAILED — link rows reference unknown slugs:"]
+        msg += [f"  row {r}: slug={s!r}  section={sect!r}  title={t!r}"
+                for r, s, sect, t in orphans]
+        msg += [f"valid slugs: {sorted(valid_slugs)}"]
+        raise SystemExit("\n".join(msg))
 
     cachebust = time.strftime("%Y-%m-%d")
     by_slug = {p["slug"]: p for p in people}
@@ -247,8 +294,9 @@ def deploy():
 
 if __name__ == "__main__":
     no_deploy = "--no-deploy" in sys.argv
-    print("=== build ===")
-    people = build()
+    from_feed = "--from-public-feed" in sys.argv
+    print(f"=== build (source: {'public feed' if from_feed else 'auth POST'}) ===")
+    people = build(from_public_feed=from_feed)
     if no_deploy:
         print(f"\n--no-deploy: skipping netlify. {len(people)} people built.")
     else:
