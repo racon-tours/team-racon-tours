@@ -31,5 +31,4 @@ jobs:
           npm install -g netlify-cli@17
           netlify deploy --prod --dir=. \
             --site=02e3c1a1-84ed-45d9-80e5-e85374ccd20d \
-            --no-build \
             --message="GH Actions $(date -u +%Y-%m-%dT%H:%MZ)"
