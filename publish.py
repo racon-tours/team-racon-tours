@@ -49,14 +49,30 @@ PUBLIC_FEED = ("https://script.google.com/macros/s/"
                "AKfycbz7wBPhvcVKMtr6vOqo4dwIPw64LrQzJmwlwpAl1QOuhzhGfoKC5iMEjqMVszGx9ePLHA"
                "/exec?action=read_roster")
 
-def fetch_from_public_feed():
-    """Public GET via Apps Script — used by Netlify CI builds, no secrets needed."""
-    req = request.Request(PUBLIC_FEED, headers={"User-Agent": "team-racon-tours-builder/1.0"})
-    with request.urlopen(req, timeout=30) as r:
-        data = json.loads(r.read())
-    if not data.get("ok"):
-        raise SystemExit(f"public feed read failed: {data}")
-    return data["people"], data["links"]
+def fetch_from_public_feed(attempts=4):
+    """Public GET via Apps Script — used by CI builds, no secrets needed.
+
+    Apps Script intermittently 404s on its own script.google.com ->
+    googleusercontent.com redirect; a bare failure here silently freezes the
+    published site, so retry with backoff before giving up.
+    """
+    last = None
+    for i in range(attempts):
+        try:
+            req = request.Request(PUBLIC_FEED,
+                                  headers={"User-Agent": "team-racon-tours-builder/1.0"})
+            with request.urlopen(req, timeout=30) as r:
+                data = json.loads(r.read())
+            if not data.get("ok"):
+                raise RuntimeError(f"feed returned ok=false: {data}")
+            return data["people"], data["links"]
+        except Exception as e:
+            last = e
+            if i < attempts - 1:
+                wait = 5 * (i + 1)
+                print(f"  feed attempt {i+1}/{attempts} failed ({e}); retrying in {wait}s")
+                time.sleep(wait)
+    raise SystemExit(f"public feed read failed after {attempts} attempts: {last}")
 
 def to_dictrows_from_feed(items):
     """Public feed already gives dicts (one per row, headers as keys). Normalize."""
