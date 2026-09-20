@@ -6,6 +6,10 @@ on:
   workflow_dispatch:       # manual trigger from GitHub UI
 
 # One job at a time — never queue overlapping builds.
+permissions:
+  contents: read
+  actions: write      # keepalive step re-enables this workflow
+
 concurrency:
   group: publish
   cancel-in-progress: false
@@ -32,3 +36,10 @@ jobs:
           netlify deploy --prod --dir=. \
             --site=02e3c1a1-84ed-45d9-80e5-e85374ccd20d \
             --message="GH Actions $(date -u +%Y-%m-%dT%H:%MZ)"
+
+      - name: Keepalive - reset the 60-day inactivity clock
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT "repos/${{ github.repository }}/actions/workflows/nightly-publish.yml/enable"
