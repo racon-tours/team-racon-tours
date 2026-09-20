@@ -43,10 +43,11 @@ def fetch_sheet():
         return out["values"]
     return read("people"), read("links")
 
-# Public read URL (no auth). Hardcoded — must match the doGet route in
+# Public read URL (no auth). Points at deployment @5 (owned by
+# global.racon.tours). Must match the doGet route in
 # sheets-endpoint/Code.gs which is locked to the team-racon-tours sheet.
 PUBLIC_FEED = ("https://script.google.com/macros/s/"
-               "AKfycbz7wBPhvcVKMtr6vOqo4dwIPw64LrQzJmwlwpAl1QOuhzhGfoKC5iMEjqMVszGx9ePLHA"
+               "AKfycbwx109kN4zz3teqMaMVzcbdIxpPFgqov1CJcarECRZr3B8nrspRKCP87U91Y0NgglBjLQ"
                "/exec?action=read_roster")
 
 def fetch_from_public_feed(attempts=4):
